@@ -46,7 +46,7 @@ export default class YtDlp extends EventEmitter {
         const [ytdlpPath, cleanup] = await getLatest();
         const obj = new YtDlp({ytdlpPath, ffmpegPath, pythonPath, verbose});
         await obj.waitForReady();
-        cleanup();
+        //cleanup();
         return obj;
     }
 
