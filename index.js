@@ -8,6 +8,10 @@ import fs from 'node:fs';
 import tmp from 'tmp-promise';
 import {promisify} from 'node:util';
 import stream from 'node:stream';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pipeline = promisify(stream.pipeline);
 
 async function getLatest() {
@@ -23,7 +27,7 @@ export default class YtDlp extends EventEmitter {
     constructor({ytdlpPath, ffmpegPath, pythonPath, verbose=false} = {}) {
         super();
         this.queue = new PQueue({concurrency: 1});
-        this.process = execa(pythonPath || 'python', ['ydlserver.py', JSON.stringify({ytdlpPath, ffmpegPath})]);
+        this.process = execa(pythonPath || 'python', [path.join(__dirname, 'ydlserver.py'), JSON.stringify({ytdlpPath, ffmpegPath})]);
         if (verbose) {
             this.process.stderr.pipe(process.stderr);
         }
