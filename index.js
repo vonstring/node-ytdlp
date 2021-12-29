@@ -105,7 +105,8 @@ export default class YtDlp extends EventEmitter {
         return await this._command('download', {url, options}, callbacks);
     }
 
-    async info(url) {
+    async info(url, {format='bv*+ba/b', ydlOpts} = {}) {
+        const options = Object.assign({format}, ydlOpts);
         const response = await this._command('info', {url, options});
         return response.info;
     }
