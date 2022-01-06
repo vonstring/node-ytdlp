@@ -8,19 +8,29 @@ import fs from 'node:fs';
 import tmp from 'tmp-promise';
 import {promisify} from 'node:util';
 import stream from 'node:stream';
+const pipeline = promisify(stream.pipeline);
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const pipeline = promisify(stream.pipeline);
-
-async function getLatest() {
-    const {fd, path:ytdlpPath, cleanup} = await tmp.file();
-    await pipeline(
-        got.stream('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp'),
-        fs.createWriteStream(ytdlpPath),
-    );
-    return [ytdlpPath, cleanup];
+const latest = {
+    ts: -1
+}
+async function getLatest(maxage) {
+    maxage = maxage || 1000 * 60 * 60 * 24;
+    const now = new Date().getTime();
+    if (now > latest.ts + maxage) {
+        const {fd, path:ytdlpPath} = await tmp.file();
+        await pipeline(
+            got.stream('https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp'),
+            fs.createWriteStream(ytdlpPath),
+        );
+        latest.ts = now;
+        latest.ytdlpPath = ytdlpPath
+    } else {
+        console.log('using cached yt-dlp');
+    }
+    return latest.ytdlpPath;
 }
 
 export default class YtDlp extends EventEmitter {
@@ -42,11 +52,10 @@ export default class YtDlp extends EventEmitter {
         });
     }
 
-    static async withLatest({ffmpegPath, pythonPath, verbose=false} = {}) {
-        const [ytdlpPath, cleanup] = await getLatest();
+    static async withLatest({ffmpegPath, pythonPath, maxage, verbose=false} = {}) {
+        const ytdlpPath = await getLatest(maxage);
         const obj = new YtDlp({ytdlpPath, ffmpegPath, pythonPath, verbose});
         await obj.waitForReady();
-        //cleanup();
         return obj;
     }
 
@@ -80,7 +89,7 @@ export default class YtDlp extends EventEmitter {
                 }
                 this.on(command, function handleResponse(response) {
                     if (response.id !== id) return;
-                    this.removeAllListeners();
+                    this.removeListener(command, handleResponse, this);
                     if (response.data.error) {
                         reject(response.data);
                     } else {
@@ -102,7 +111,8 @@ export default class YtDlp extends EventEmitter {
         if (onProgress) {
             callbacks.progress = onProgress;
         }
-        return await this._command('download', {url, options}, callbacks);
+        const response = await this._command('download', {url, options}, callbacks);
+        return response.info
     }
 
     async info(url, {format='bv*+ba/b', ydlOpts} = {}) {
