@@ -59,7 +59,7 @@ class Session:
         self.send(payload)
 
     def send(self, data):
-        sys.stdout.write(json.dumps(data)+"\n")
+        sys.stdout.write(json.dumps(data, default=lambda x: None)+"\n")
         sys.stdout.flush()
 
     def error(self, exception):
