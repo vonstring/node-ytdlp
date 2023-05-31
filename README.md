@@ -1,6 +1,6 @@
-# node-ytdlp
+# ytdlp-helper
 
-node-ytdlp is a Node.js module that provides a simple interface for downloading and retrieving information from YouTube videos using the `yt-dlp` command-line tool.
+ytdlp-helper is a Node.js module that provides a simple interface for downloading and retrieving information from YouTube videos using the `yt-dlp` command-line tool.
 
 ## Features
 
@@ -14,13 +14,13 @@ node-ytdlp is a Node.js module that provides a simple interface for downloading 
 To use YtDlp in your project, you need to install it using npm:
 
 ```bash
-npm install --save node-ytdlp
+npm install --save ytdlp-helper
 ```
 
 ## Usage
 
 ```javascript
-import YtDlp from node-ytdlp;
+import YtDlp from ytdlp-helper;
 
 (async () => {
   const ytdlp = await YtDlp.withLatest();
